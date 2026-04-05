@@ -1,0 +1,223 @@
+================================================================
+        INFODEMIC WATCH — FULL MODEL EXPLANATION
+        SIR Misinformation Propagation on Barabasi-Albert Networks
+================================================================
+
+----------------------------------------------------------------
+1. OVERVIEW
+----------------------------------------------------------------
+Infodemic Watch simulates how misinformation spreads through a
+social network using an extended SIR (Susceptible–Infected–
+Recovered) epidemiological model. Instead of a biological virus,
+the "infection" here is a piece of false information or rumour.
+
+The simulation runs on a Barabasi-Albert (BA) scale-free network,
+which closely mimics the structure of real social networks such as
+Twitter, Facebook, and WhatsApp — where a small number of highly
+connected "hub" users dominate information flow.
+
+----------------------------------------------------------------
+2. THE NETWORK — BARABASI-ALBERT (BA) MODEL
+----------------------------------------------------------------
+A BA network is built using preferential attachment:
+  - New nodes are added one at a time.
+  - Each new node connects to m existing nodes.
+  - Nodes with more connections are more likely to receive new links.
+
+This produces a scale-free network with a power-law degree
+distribution — a few hubs have very high connectivity while most
+nodes have only a few connections. This mirrors real social media
+platforms.
+
+Parameters:
+  N  — Total number of nodes (users) in the network.
+  m  — Number of edges each new node attaches to (controls density).
+       Higher m = denser network = faster spread.
+
+----------------------------------------------------------------
+3. THE FIVE STATES
+----------------------------------------------------------------
+Each node in the network is assigned one of five states:
+
+  [S] SUSCEPTIBLE (Blue)
+      A regular user who has not yet encountered the misinformation.
+      They can become Believers if exposed by a neighbour.
+
+  [I] BELIEVERS (Red)
+      An infected user who believes the misinformation and actively
+      spreads it to their neighbours. This is the "infectious" state.
+
+  [R] RECOVERED (Green)
+      A user who previously believed the misinformation but has since
+      corrected their belief (debunked, lost interest, or self-corrected).
+      Recovered users do not spread misinformation further.
+
+  [SK] SKEPTICS (Purple)
+      Users who are inherently resistant to misinformation. They have
+      a reduced probability of becoming Believers when exposed.
+      They model critically thinking or media-literate users.
+
+  [FC] FACT-CHECKERS (Amber)
+      Specialised nodes that accelerate recovery in their neighbourhood.
+      When a Believer has a Fact-Checker as a neighbour, their recovery
+      rate (gamma) is multiplied by fc_mult, helping them recover faster.
+
+----------------------------------------------------------------
+4. MODEL DYNAMICS — HOW EACH STEP WORKS
+----------------------------------------------------------------
+At every time step, the following rules are applied simultaneously
+to all nodes:
+
+  SPREADING (S -> I or SK -> I):
+    For each Believer node, it attempts to infect each susceptible
+    or skeptic neighbour:
+      - If neighbour is Susceptible:   infect with probability beta
+      - If neighbour is a Skeptic:     infect with probability beta * sk_mult
+        (sk_mult = 0.3 by default, meaning skeptics are 70% harder to infect)
+
+  RECOVERY (I -> R):
+    Each Believer recovers spontaneously with probability gamma.
+    If the Believer has at least one Fact-Checker neighbour, the
+    effective recovery rate becomes gamma * fc_mult (boosted).
+
+  STATIC ROLES:
+    Skeptics and Fact-Checkers never change state — they are fixed
+    roles representing structural properties of users.
+
+----------------------------------------------------------------
+5. KEY PARAMETERS
+----------------------------------------------------------------
+  beta  (Transmission rate)
+        Probability that a Believer infects a Susceptible neighbour
+        in a single time step.
+        Range: 0.01 – 0.15
+        Higher beta = faster, wider spread.
+
+  gamma (Recovery rate)
+        Probability that a Believer recovers (stops spreading) in
+        a single time step.
+        Range: 0.01 – 0.08
+        Higher gamma = shorter infection duration.
+
+  Steps (T)
+        Number of simulation time steps to run.
+
+  Init I %
+        Percentage of susceptible nodes seeded as initial Believers
+        at the start of the simulation.
+
+  Skeptics %
+        Fraction of the total population assigned as Skeptics before
+        the simulation begins.
+
+  FC %
+        Fraction of the total population assigned as Fact-Checkers.
+
+----------------------------------------------------------------
+6. INTERVENTIONS
+----------------------------------------------------------------
+Two interventions can be toggled on and compared against a baseline:
+
+  FC BOOST
+        Activates an enhanced Fact-Checker effect. The FC multiplier
+        (fc_mult, range 2x–4x) amplifies the recovery rate of
+        Believers who are neighbours of Fact-Checkers.
+        Models organised fact-checking campaigns or platform labels.
+
+  REMOVE HUBS
+        Removes the top hub_pct% most-connected nodes from the network
+        before the simulation runs. This models:
+          - Suspending or banning super-spreader accounts.
+          - Algorithmic demotion of viral content.
+          - Deplatforming high-reach users.
+        Hub removal can dramatically reduce spread because hubs act
+        as bridges between communities in scale-free networks.
+
+----------------------------------------------------------------
+7. THE BASIC REPRODUCTION NUMBER (R0)
+----------------------------------------------------------------
+R0 is the average number of new Believers one Believer generates
+in a fully susceptible population. It is calculated as:
+
+        R0 = beta * <k> / gamma
+
+where <k> is the average node degree (mean number of connections).
+
+  R0 > 1 : The misinformation will spread exponentially (epidemic).
+  R0 = 1 : Borderline — spread is self-sustaining but not growing.
+  R0 < 1 : The misinformation will die out naturally.
+
+R0 is shown in the Results tab for both Baseline and Intervention runs.
+
+----------------------------------------------------------------
+8. OUTPUT METRICS
+----------------------------------------------------------------
+  Peak I %
+        The maximum percentage of the population that simultaneously
+        believed the misinformation at any point in time.
+        Lower is better — indicates the intervention flattened the curve.
+
+  Final R %
+        The percentage of the population that was ever infected and
+        then recovered by the end of the simulation.
+        This represents the total reach of the misinformation campaign.
+
+  R0
+        Basic reproduction number as defined above.
+
+----------------------------------------------------------------
+9. READING THE TIME SERIES CHART
+----------------------------------------------------------------
+The Time Series tab shows all five state populations (%) over time:
+
+  Solid lines   = Baseline (no intervention)
+  Dashed lines  = Intervention run
+
+Watch for:
+  - How quickly the red Believer curve peaks.
+  - Whether the green Recovered curve plateaus low (contained) or high.
+  - The gap between solid and dashed lines shows intervention effectiveness.
+  - Purple (Skeptics) and Amber (Fact-Checkers) remain flat as they
+    are fixed roles and do not change state.
+
+----------------------------------------------------------------
+10. READING THE NETWORK VISUALISATION
+----------------------------------------------------------------
+The Network tab shows the BA graph at its initial state (t=0).
+Node colours match the five states listed above.
+Hub nodes appear at the centre of clusters with many connections.
+Use this to visually inspect how roles are distributed and how
+central Fact-Checkers and Skeptics are placed.
+
+----------------------------------------------------------------
+11. REAL-WORLD INTERPRETATION
+----------------------------------------------------------------
+This model is an abstraction. In practice:
+
+  Skeptics          ~ Media-literate users, journalists, educated readers
+  Fact-Checkers     ~ Verified fact-checking accounts, platform moderators
+  Hub removal       ~ Account suspension, shadowbanning, viral content limits
+  FC Boost          ~ Active debunking campaigns, warning labels on posts
+  beta              ~ Virality of the content, emotional resonance
+  gamma             ~ Natural correction rate, attention span decay
+
+The model demonstrates that:
+  1. Scale-free networks amplify misinformation far beyond random networks.
+  2. Targeting hubs is more effective than broad suppression.
+  3. Even a small % of Fact-Checkers can significantly reduce peak spread.
+  4. Skeptics slow but do not stop an epidemic if R0 >> 1.
+  5. Combining hub removal + FC boost produces the strongest containment.
+
+----------------------------------------------------------------
+12. LIMITATIONS
+----------------------------------------------------------------
+  - Nodes have fixed roles; in reality people change behaviour over time.
+  - No re-infection: Recovered users cannot become Believers again.
+  - The model is stochastic — results vary across runs (use seed for
+    reproducibility).
+  - Real networks have community structure not fully captured by BA graphs.
+  - No external shocks (e.g., breaking news re-igniting spread) are modelled.
+
+================================================================
+        Built with Streamlit, NetworkX, NumPy, Pandas, Plotly
+================================================================
